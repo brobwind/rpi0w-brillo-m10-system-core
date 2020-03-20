@@ -21,6 +21,8 @@
 #include <brillo/flag_helper.h>
 #include <brillo/syslog_logging.h>
 
+#include <binder/ProcessState.h>
+
 #include "constants.h"
 #include "uploader/metricsd_service_runner.h"
 #include "uploader/upload_service.h"
@@ -72,6 +74,12 @@ int main(int argc, char** argv) {
   if (!FLAGS_foreground && daemon(0, 0) != 0) {
     return errno;
   }
+
+  ::android::ProcessState::self()->setThreadPoolMaxThreadCount(4);
+
+  // start the thread pool
+  ::android::sp<android::ProcessState> ps(::android::ProcessState::self());
+  ps->startThreadPool();
 
   UploadService upload_service(
       FLAGS_server, base::TimeDelta::FromSeconds(FLAGS_upload_interval_secs),
